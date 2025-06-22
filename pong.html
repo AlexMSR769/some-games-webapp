@@ -76,7 +76,7 @@
         const WINNING_SCORE = 5;
         // CHANGE 1: New constants for ball speed control
         const INITIAL_BALL_SPEED = 4;
-        const BALL_SPEED_INCREASE = 1.1; // 10% increase
+        const BALL_SPEED_INCREASE = 1.05; // 5% increase
 
         let gameRunning = false;
         let paddleWidth, paddleHeight, ballRadius;
@@ -85,7 +85,7 @@
         function setupDimensions() {
             const canvasContainer = document.getElementById('game-container');
             const size = Math.min(window.innerWidth * 0.95, window.innerHeight * 0.9);
-            canvas.width = size;
+            canvas.width = size * 0.95;
             canvas.height = size * 1.2; 
             canvasContainer.style.width = `${canvas.width}px`;
             canvasContainer.style.height = `${canvas.height}px`;
@@ -186,8 +186,8 @@
             ball.x += ball.dx;
             ball.y += ball.dy;
 
-            if (ball.x + ball.radius + 1 > canvas.width || ball.x - ball.radius < 0) {
-                ball.dx *= -1;
+            if (ball.x + ball.radius + 2 > canvas.width || ball.x - ball.radius < 0) {
+                ball.dx *= -1.05;
             }
 
             if (isColliding(ball, player)) {

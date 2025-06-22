@@ -1,3 +1,14 @@
+header {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+header img {
+  display: inline-block;
+  max-width: 70vw;
+  height: auto;
+  border-radius: 12px;
+}
 body {
   background-color: #2b2d42;
   color: #f0f0f0;

@@ -76,7 +76,7 @@
         const WINNING_SCORE = 5;
         // CHANGE 1: New constants for ball speed control
         const INITIAL_BALL_SPEED = 4;
-        const BALL_SPEED_INCREASE = 1.05; // 5% increase
+        const BALL_SPEED_INCREASE = 1.02; // 2% increase
 
         let gameRunning = false;
         let paddleWidth, paddleHeight, ballRadius;
@@ -221,13 +221,10 @@
 
         // CHANGE 1: Function to increase and re-normalize ball speed
         function increaseBallSpeed() {
-            ball.speed *= BALL_SPEED_INCREASE;
+            ball.speed = BALL_SPEED_INCREASE + ball.speed + 0.02;
             const magnitude = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
             ball.dx = (ball.dx / magnitude) * ball.speed;
             ball.dy = (ball.dy / magnitude) * ball.speed;
-            if (ball.speed>=1.5){
-               ball.speed=1
-            }
         }
         
         // CHANGE 4: Simple AI for the opponent paddle

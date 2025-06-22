@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Vertical Pong</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            border: 2px solid #fff;
+            box-shadow: 0 0 20px #fff;
+        }
+
+        canvas {
+            display: block;
+            background-color: #000;
+        }
+
+        #message-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        #message-overlay h1 {
+            font-size: 2.5em;
+            margin: 0;
+        }
+
+        #message-overlay p {
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="pongCanvas"></canvas>
+        <div id="message-overlay">
+            <h1 id="main-message">PONG VERTICAL</h1>
+            <p id="sub-message">Toca para Empezar</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('pongCanvas');
+        const ctx = canvas.getContext('2d');
+        const messageOverlay = document.getElementById('message-overlay');
+        const mainMessage = document.getElementById('main-message');
+        const subMessage = document.getElementById('sub-message');
+
+        const WINNING_SCORE = 5;
+        // CHANGE 1: New constants for ball speed control
+        const INITIAL_BALL_SPEED = 4;
+        const BALL_SPEED_INCREASE = 1.01; // 1% increase
+
+        let gameRunning = false;
+        let paddleWidth, paddleHeight, ballRadius;
+        let player, opponent, ball;
+
+        function setupDimensions() {
+            const canvasContainer = document.getElementById('game-container');
+            const size = Math.min(window.innerWidth * 0.95, window.innerHeight * 0.9);
+            canvas.width = size;
+            canvas.height = size * 1.4; 
+            canvasContainer.style.width = `${canvas.width}px`;
+            canvasContainer.style.height = `${canvas.height}px`;
+
+            paddleWidth = canvas.width / 4;
+            paddleHeight = 20;
+            ballRadius = paddleWidth / 6;
+        }
+        
+        function initializeGame() {
+            player = {
+                x: canvas.width / 2 - paddleWidth / 2,
+                y: canvas.height - paddleHeight - 10,
+                width: paddleWidth,
+                height: paddleHeight,
+                color: '#0077ff',
+                score: 0
+            };
+            opponent = {
+                x: canvas.width / 2 - paddleWidth / 2,
+                y: 10,
+                width: paddleWidth,
+                height: paddleHeight,
+                color: '#ff3333',
+                score: 0
+            };
+            
+            resetRound();
+            updateScoreDisplay();
+        }
+
+        // CHANGE 1, 2 & 3: Renamed to resetRound, handles speed and delays
+        function resetRound() {
+            ball = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                radius: ballRadius,
+                speed: INITIAL_BALL_SPEED, // Reset speed
+                dx: 0, // Start with no movement
+                dy: 0,
+                color: '#33ff33'
+            };
+            
+            // Apply a 1-second delay before launching the ball
+            setTimeout(() => {
+                if (!gameRunning) return; // Don't launch if game ended during delay
+                const angle = Math.random() * Math.PI / 2 - Math.PI / 4; // Angle towards a side
+                ball.dx = Math.cos(angle) * ball.speed;
+                ball.dy = (Math.random() < 0.5 ? 1 : -1) * ball.speed; // Randomly up or down
+            }, 1000); // 1000ms = 1 second delay
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 10]);
+            ctx.beginPath();
+            ctx.moveTo(0, opponent.y + opponent.height / 2);
+            ctx.lineTo(canvas.width, opponent.y + opponent.height / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, player.y + player.height / 2);
+            ctx.lineTo(canvas.width, player.y + player.height / 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            drawRect(opponent);
+            drawRect(player);
+            drawCircle(ball);
+            updateScoreDisplay();
+        }
+
+        function drawRect(paddle) {
+            ctx.fillStyle = paddle.color;
+            ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+        }
+
+        function drawCircle(b) {
+            ctx.fillStyle = b.color;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function updateScoreDisplay() {
+            ctx.fillStyle = 'white';
+            ctx.font = '30px "Courier New", Courier, monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${opponent.score} - ${player.score}`, canvas.width / 2, canvas.height / 2);
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            // CHANGE 4: Move opponent AI
+            moveOpponentAI();
+
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+                ball.dx *= -1;
+            }
+
+            if (isColliding(ball, player)) {
+                ball.dy = -Math.abs(ball.dy);
+                let deltaX = ball.x - (player.x + player.width / 2);
+                ball.dx = deltaX * 0.25;
+                // CHANGE 1: Increase speed on hit
+                increaseBallSpeed();
+            }
+            
+            if (isColliding(ball, opponent)) {
+                ball.dy = Math.abs(ball.dy);
+                let deltaX = ball.x - (opponent.x + opponent.width / 2);
+                ball.dx = deltaX * 0.25;
+                // CHANGE 1: Increase speed on hit
+                increaseBallSpeed();
+            }
+            
+            if (ball.y + ball.radius < 0) {
+                player.score++;
+                checkWin();
+                resetRound();
+            }
+
+            if (ball.y - ball.radius > canvas.height) {
+                opponent.score++;
+                checkWin();
+                resetRound();
+            }
+        }
+
+        // CHANGE 1: Function to increase and re-normalize ball speed
+        function increaseBallSpeed() {
+            ball.speed *= BALL_SPEED_INCREASE;
+            const magnitude = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+            ball.dx = (ball.dx / magnitude) * ball.speed;
+            ball.dy = (ball.dy / magnitude) * ball.speed;
+        }
+        
+        // CHANGE 4: Simple AI for the opponent paddle
+        function moveOpponentAI() {
+            const paddleCenter = opponent.x + opponent.width / 2;
+            const aiSpeed = ball.speed * 0.8; // AI is slightly slower than the ball
+
+            if (paddleCenter < ball.x - 10) { // -10 to prevent jittering
+                opponent.x += aiSpeed;
+            } else if (paddleCenter > ball.x + 10) {
+                opponent.x -= aiSpeed;
+            }
+            
+            // Boundary check for AI paddle
+            if (opponent.x < 0) opponent.x = 0;
+            if (opponent.x + opponent.width > canvas.width) {
+                opponent.x = canvas.width - opponent.width;
+            }
+        }
+        
+        function isColliding(circle, rect) {
+            let closestX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.width));
+            let closestY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.height));
+            let distanceX = circle.x - closestX;
+            let distanceY = circle.y - closestY;
+            return (distanceX * distanceX + distanceY * distanceY) < (circle.radius * circle.radius);
+        }
+
+        function checkWin() {
+            if (player.score >= WINNING_SCORE) {
+                endGame("¡GANASTE!");
+            } else if (opponent.score >= WINNING_SCORE) {
+                endGame("GAME OVER");
+            }
+        }
+        
+        function endGame(message) {
+             gameRunning = false;
+             mainMessage.innerText = message;
+             subMessage.innerText = "Toca para jugar de nuevo";
+             messageOverlay.style.display = 'flex';
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // CHANGE 4: Simplified to only move the player's paddle
+        function movePaddle(x) {
+            const rect = canvas.getBoundingClientRect();
+            player.x = x - rect.left - (player.width / 2);
+
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) {
+                player.x = canvas.width - player.width;
+            }
+        }
+
+        document.addEventListener('mousemove', e => movePaddle(e.clientX));
+        document.addEventListener('touchmove', e => {
+            e.preventDefault();
+            movePaddle(e.touches[0].clientX);
+        }, { passive: false });
+
+        // CHANGE 2 & 3: Logic now handles restarting correctly
+        messageOverlay.addEventListener('click', () => {
+            if (!gameRunning) {
+                initializeGame();
+                gameRunning = true;
+                messageOverlay.style.display = 'none';
+            }
+        });
+        
+        window.addEventListener('resize', () => {
+             setupDimensions();
+             initializeGame();
+             draw();
+             gameRunning = false;
+             messageOverlay.style.display = 'flex';
+             mainMessage.innerText = 'PONG VERTICAL';
+             subMessage.innerText = 'Toca para Empezar';
+        });
+
+        setupDimensions();
+        initializeGame();
+        draw();
+        gameLoop();
+
+    </script>
+</body>
+</html>
+

@@ -76,7 +76,7 @@
         const WINNING_SCORE = 5;
         // CHANGE 1: New constants for ball speed control
         const INITIAL_BALL_SPEED = 4;
-        const BALL_SPEED_INCREASE = 1.02; // 1% increase
+        const BALL_SPEED_INCREASE = 1.1; // 10% increase
 
         let gameRunning = false;
         let paddleWidth, paddleHeight, ballRadius;
@@ -86,7 +86,7 @@
             const canvasContainer = document.getElementById('game-container');
             const size = Math.min(window.innerWidth * 0.95, window.innerHeight * 0.9);
             canvas.width = size;
-            canvas.height = size * 1.4; 
+            canvas.height = size * 1.2; 
             canvasContainer.style.width = `${canvas.width}px`;
             canvasContainer.style.height = `${canvas.height}px`;
 

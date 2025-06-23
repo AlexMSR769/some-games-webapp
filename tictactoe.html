@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retro Arcade Tic Tac Toe</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style id="app-style">
+    :root {
+      --neon-blue: #00f3ff;
+      --neon-red: #ff3366;
+      --neon-purple: #9d00ff;
+      --neon-green: #39ff14;
+      --bg-color: #121212;
+      --grid-color: #2a2a2a;
+    }
+    
+    body {
+      background-color: var(--bg-color);
+      color: white;
+      font-family: 'Press Start 2P', cursive;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    
+    .loading-text {
+      color: var(--neon-purple);
+      font-size: 1.5rem;
+      margin-top: 20px;
+      text-shadow: 0 0 5px var(--neon-purple), 0 0 10px var(--neon-purple);
+      animation: pulse 1.5s infinite;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top: 4px solid var(--neon-purple);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    .game-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      padding: 20px;
+      max-width: 500px;
+      width: 100%;
+    }
+    
+    .game-title {
+      font-size: 2rem;
+      color: var(--neon-purple);
+      text-shadow: 0 0 5px var(--neon-purple), 0 0 10px var(--neon-purple);
+      margin: 0;
+      animation: glow 2s infinite alternate;
+    }
+    
+    .score-panel {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 300px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid var(--neon-purple);
+      border-radius: 10px;
+      box-shadow: 0 0 10px var(--neon-purple);
+    }
+    
+    .score {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .score-x {
+      color: var(--neon-blue);
+      text-shadow: 0 0 5px var(--neon-blue);
+    }
+    
+    .score-o {
+      color: var(--neon-red);
+      text-shadow: 0 0 5px var(--neon-red);
+    }
+    
+    .score-label {
+      font-size: 1rem;
+    }
+    
+score-value {
+      font-size: 1.5rem;
+    }
+    
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-gap: 10px;
+      width: 300px;
+      height: 300px;
+      margin: 0 auto;
+    }
+    
+    .cell {
+      background-color: var(--grid-color);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 2px solid var(--neon-purple);
+      box-shadow: 0 0 5px var(--neon-purple);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .cell:hover:not(.filled) {
+      background-color: #3a3a3a;
+      box-shadow: 0 0 10px var(--neon-purple), 0 0 20px var(--neon-purple);
+    }
+    
+    .cell.x {
+      color: var(--neon-blue);
+      text-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+    }
+    
+    .cell.o {
+      color: var(--neon-red);
+      text-shadow: 0 0 5px var(--neon-red), 0 0 10px var(--neon-red);
+    }
+    
+    .cell.winning {
+      animation: flash 0.5s infinite alternate;
+    }
+    
+    .new-round-btn {
+      background-color: transparent;
+      color: var(--neon-green);
+      border: 2px solid var(--neon-green);
+      padding: 12px 24px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: all 0.2s ease;
+      text-shadow: 0 0 5px var(--neon-green);
+      box-shadow: 0 0 5px var(--neon-green);
+    }
+    
+    .new-round-btn:hover {
+      background-color: rgba(57, 255, 20, 0.2);
+      box-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green);
+    }
+    
+    .status-message {
+      height: 30px;
+      font-size: 1.2rem;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .status-message.visible {
+      opacity: 1;
+    }
+    
+    .winner-message {
+      color: var(--neon-green);
+      text-shadow: 0 0 5px var(--neon-green);
+    }
+    
+    .tie-message {
+      color: var(--neon-purple);
+      text-shadow: 0 0 5px var(--neon-purple);
+    }
+    
+    .current-turn {
+      color: var(--neon-green);
+      text-shadow: 0 0 5px var(--neon-green);
+      font-size: 1.2rem;
+      text-align: center;
+      height: 30px;
+    }
+    
+    .grid-lines {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px;
+      height: 320px;
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    .grid-line {
+      position: absolute;
+      background-color: var(--neon-purple);
+      box-shadow: 0 0 10px var(--neon-purple);
+      opacity: 0.7;
+    }
+    
+    .h-line-1, .h-line-2 {
+      width: 100%;
+      height: 2px;
+    }
+    
+    .h-line-1 {
+      top: 33.3%;
+    }
+.h-line-2 {
+      top: 66.6%;
+    }
+    
+    .v-line-1, .v-line-2 {
+      height: 100%;
+      width: 2px;
+    }
+    
+    .v-line-1 {
+      left: 33.3%;
+    }
+    
+    .v-line-2 {
+      left: 66.6%;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+    
+    @keyframes glow {
+      from { text-shadow: 0 0 5px var(--neon-purple), 0 0 10px var(--neon-purple); }
+      to { text-shadow: 0 0 10px var(--neon-purple), 0 0 20px var(--neon-purple), 0 0 30px var(--neon-purple); }
+    }
+    
+    @keyframes flash {
+      from { opacity: 1; }
+      to { opacity: 0.5; }
+    }
+    
+    @keyframes pop-in {
+      0% { transform: scale(0); opacity: 0; }
+      70% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .pop-in {
+      animation: pop-in 0.3s forwards;
+    }
+
+    /* Background grid effect */
+    .background-grid {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        linear-gradient(rgba(33, 33, 33, 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(33, 33, 33, 0.3) 1px, transparent 1px);
+      background-size: 20px 20px;
+      z-index: -2;
+      perspective: 1000px;
+      transform-style: preserve-3d;
+      transform: rotateX(80deg);
+      pointer-events: none;
+    }
+    
+    .background-glow {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(157, 0, 255, 0.2) 0%, rgba(157, 0, 255, 0) 70%);
+      transform: translate(-50%, -50%);
+      z-index: -1;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading-screen">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">LOADING GAME...</p>
+  </div>
+  
+  <div class="game-container">
+    <h1 class="game-title">TIC TAC TOE</h1>
+    
+    <div class="score-panel">
+      <div class="score score-x">
+        <div class="score-label">PLAYER X</div>
+        <div class="score-value" id="score-x">0</div>
+      </div>
+      <div class="score score-o">
+        <div class="score-label">PLAYER O</div>
+        <div class="score-value" id="score-o">0</div>
+      </div>
+    </div>
+    
+    <div class="current-turn" id="current-turn">PLAYER X TURN</div>
+    
+    <div class="grid-container" id="grid">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+    
+    <div class="status-message" id="status-message"></div>
+    
+    <button class="new-round-btn" id="new-round-btn">NEW ROUND</button>
+  </div>
+  
+  <div class="grid-lines">
+    <div class="grid-line h-line-1"></div>
+    <div class="grid-line h-line-2"></div>
+    <div class="grid-line v-line-1"></div>
+    <div class="grid-line v-line-2"></div>
+  </div>
+  
+  <div class="background-grid"></div>
+  <div class="background-glow"></div>
+
+  <script id="app-script">
+    // Game state variables
+    let currentPlayer = 'x';
+    let gameBoard = ['', '', '', '', '', '', '', '', ''];
+    let gameActive = true;
+    let scores = {
+      x: 0,
+      o: 0
+    };
+    
+    // DOM elements
+    const cells = document.querySelectorAll('.cell');
+    const scoreX = document.getElementById('score-x');
+    const scoreO = document.getElementById('score-o');
+    const newRoundBtn = document.getElementById('new-round-btn');
+    const statusMessage = document.getElementById('status-message');
+    const currentTurnDisplay = document.getElementById('current-turn');
+    const loadingScreen = document.querySelector('.loading-screen');
+    const gameContainer = document.querySelector('.game-container');
+   </script>
+</body>
